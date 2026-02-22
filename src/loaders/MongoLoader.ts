@@ -1,3 +1,4 @@
+import path from 'path';
 import fileLoader from './_common/fileLoader';
 
 export default class MongoLoader {
@@ -8,8 +9,15 @@ export default class MongoLoader {
   }
 
   load(): Record<string, any> {
-    const models = fileLoader(`./src/managers/entities/**/*.${this.schemaExtension}`);
-    // Each loaded module might use default export
+    // When running the compiled output, __dirname is inside dist/loaders/.
+    // Load compiled .js models from dist/; otherwise load .ts source files from src/.
+    const isCompiled = __dirname.split(path.sep).includes('dist');
+    const basePath = isCompiled ? './dist' : './src';
+    const ext = isCompiled
+      ? this.schemaExtension.replace(/\.ts$/, '.js')
+      : this.schemaExtension;
+
+    const models = fileLoader(`${basePath}/managers/entities/**/*.${ext}`);
     const resolved: Record<string, any> = {};
     Object.keys(models).forEach((key) => {
       resolved[key] = models[key].default || models[key];

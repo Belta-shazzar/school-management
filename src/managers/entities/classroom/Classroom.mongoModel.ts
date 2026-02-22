@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import classroomSchema from './classroom.schema';
 
 export interface IClassroom extends Document {
   name: string;
@@ -35,5 +36,7 @@ const ClassroomSchema = new Schema<IClassroom>(
   },
   { timestamps: true }
 );
+
+// ClassroomSchema.index({ schoolId: 1 });
 
 export default mongoose.model<IClassroom>('Classroom', ClassroomSchema);

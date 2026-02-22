@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import logger from '../../libs/logger';
 
 interface BoltArgs {
   mwsRepo: Record<string, any>;
@@ -70,7 +71,7 @@ export default class StackBolt {
     const fn = this.mwsRepo[fnKey];
 
     if (!fn) {
-      console.log('___Function not found __ Jumping ____ ');
+      logger.error(`Middleware not found in mwsRepo: ${fnKey}`);
       this.end({ error: `function not found: ${fnKey}` });
     } else {
       try {
@@ -84,7 +85,7 @@ export default class StackBolt {
           self: fn,
         });
       } catch (err) {
-        console.log(`failed to execute ${fnKey}:`, err);
+        logger.error(`Middleware execution failed: ${fnKey}`, { error: err });
         this.end({ error: `execution failed on function ${fnKey}, ${err}` });
       }
     }

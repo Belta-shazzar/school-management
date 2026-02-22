@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import logger from '../../libs/logger';
 
 interface TokenPayload {
   userId: string;
@@ -65,7 +66,7 @@ export default class TokenManager {
     try {
       decoded = jwt.verify(token, secret) as TokenPayload;
     } catch (err) {
-      console.log(err);
+      logger.warn('Token verification failed', { error: (err as Error).message });
     }
     return decoded;
   }

@@ -1,7 +1,13 @@
+import logger from '../libs/logger';
+
 export default ({ managers }: any) => {
   return ({ req, res, next }: any) => {
     if (!req.headers.token) {
-      console.log('token required but not found');
+      logger.warn('Request rejected: missing token header', {
+        path: req.path,
+        method: req.method,
+        ip: req.ip,
+      });
       return managers.responseDispatcher.dispatch(res, {
         ok: false,
         code: 401,
@@ -12,7 +18,7 @@ export default ({ managers }: any) => {
     try {
       decoded = managers.token.verifyLongToken({ token: req.headers.token });
       if (!decoded) {
-        console.log('failed to decode-1');
+        logger.warn('Request rejected: token could not be decoded', { ip: req.ip });
         return managers.responseDispatcher.dispatch(res, {
           ok: false,
           code: 401,
@@ -20,7 +26,10 @@ export default ({ managers }: any) => {
         });
       }
     } catch (err) {
-      console.log('failed to decode-2');
+      logger.warn('Request rejected: token verification threw an error', {
+        error: (err as Error).message,
+        ip: req.ip,
+      });
       return managers.responseDispatcher.dispatch(res, {
         ok: false,
         code: 401,

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import getParamNames from './_common/getParamNames';
+import logger from '../../libs/logger';
 
 /**
  * Scans all managers for exposed methods
@@ -31,6 +32,11 @@ export default class ApiHandler {
     this.mw = this.mw.bind(this);
 
     /** filter only the modules that have httpExposed */
+    const exposedModules = Object.keys(this.managers).filter(
+      (mk) => this.managers[mk][this.prop]
+    );
+
+    logger.debug('Registering HTTP-exposed managers', { modules: exposedModules });
     Object.keys(this.managers).forEach((mk) => {
       if (this.managers[mk][this.prop]) {
         this.methodMatrix[mk] = {};
@@ -88,7 +94,7 @@ export default class ApiHandler {
     try {
       result = await targetModule[fnName](data);
     } catch (err) {
-      console.log('error', err);
+      logger.error(`Manager function execution failed: ${fnName}`, { error: err });
       result = { error: `${fnName} failed to execute` };
     }
     return result;

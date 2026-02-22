@@ -166,9 +166,14 @@ export default class SchoolManager {
   }) {
     if (!id) return { error: 'School ID is required' };
 
+    // TODO: Convert to soft delete.
     const school = await SchoolModel.findByIdAndDelete(id);
     if (!school) return { error: 'School not found' };
 
     return { message: 'School deleted successfully' };
+  }
+
+  static async getSchoolById(schoolId: string) {
+    return await SchoolModel.findById(schoolId);
   }
 }

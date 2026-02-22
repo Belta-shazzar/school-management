@@ -1,3 +1,4 @@
+import path from 'path';
 import fileLoader from './_common/fileLoader';
 
 export default class MiddlewaresLoader {
@@ -8,7 +9,9 @@ export default class MiddlewaresLoader {
   }
 
   load(): Record<string, any> {
-    const mws = fileLoader('./src/mws/**/*.mw.ts');
+    const isCompiled = __dirname.split(path.sep).includes('dist');
+    const mwGlob = isCompiled ? './dist/mws/**/*.mw.js' : './src/mws/**/*.mw.ts';
+    const mws = fileLoader(mwGlob);
     Object.keys(mws).forEach((ik) => {
       /** call the mw builder — each mw file exports a factory function */
       const mod = mws[ik].default || mws[ik];

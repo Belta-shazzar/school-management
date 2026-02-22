@@ -1,3 +1,4 @@
+import path from 'path';
 import fileLoader from './_common/fileLoader';
 
 export interface ValidatorFunction {
@@ -33,7 +34,11 @@ export default class ValidatorsLoader {
 
   load(): Record<string, Record<string, ValidatorFunction>> {
     const validators: Record<string, Record<string, ValidatorFunction>> = {};
-    const schemes = fileLoader('./src/managers/**/*.schema.ts');
+    const isCompiled = __dirname.split(path.sep).includes('dist');
+    const schemaGlob = isCompiled
+      ? './dist/managers/**/*.schema.js'
+      : './src/managers/**/*.schema.ts';
+    const schemes = fileLoader(schemaGlob);
 
     Object.keys(schemes).forEach((sk) => {
       const schemaModule = schemes[sk].default || schemes[sk];

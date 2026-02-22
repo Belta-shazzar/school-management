@@ -6,6 +6,7 @@ export interface ISchool extends Document {
   phone?: string;
   email?: string;
   website?: string;
+  createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,7 +24,6 @@ const SchoolSchema = new Schema<ISchool>(
       type: String,
       required: true,
       trim: true,
-      maxlength: 300,
     },
     phone: {
       type: String,
@@ -34,13 +34,15 @@ const SchoolSchema = new Schema<ISchool>(
       type: String,
       trim: true,
       lowercase: true,
-      maxlength: 100,
     },
     website: {
       type: String,
       trim: true,
-      maxlength: 200,
     },
+    createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
   },
   { timestamps: true }
 );

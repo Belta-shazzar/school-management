@@ -1,6 +1,6 @@
 import MiddlewaresLoader from './MiddlewaresLoader';
 import ApiHandler from '../managers/api/Api.manager';
-import UserServer from '../managers/http/UserServer.manager';
+import Server from '../managers/http/server.manager';
 import ResponseDispatcher from '../managers/response_dispatcher/ResponseDispatcher.manager';
 import VirtualStack from '../managers/virtual_stack/VirtualStack.manager';
 import ValidatorsLoader from './ValidatorsLoader';
@@ -63,7 +63,7 @@ export default class ManagersLoader {
     /***************************************** CUSTOM MANAGERS *****************************************/
     this.managers.token = new TokenManager(this.injectable);
 
-    this.managers.user = new UserManager(this.injectable);
+    this.managers.auth = new UserManager(this.injectable);
     this.managers.school = new SchoolManager(this.injectable);
     this.managers.classroom = new ClassroomManager(this.injectable);
     this.managers.student = new StudentManager(this.injectable);
@@ -74,12 +74,12 @@ export default class ManagersLoader {
       ...this.injectable,
     });
 
-    this.managers.userApi = new ApiHandler({
+    this.managers.api = new ApiHandler({
       ...this.injectable,
       ...{ prop: 'httpExposed' },
     });
 
-    this.managers.userServer = new UserServer({
+    this.managers.server = new Server({
       config: this.config,
       managers: this.managers,
     });

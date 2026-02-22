@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   role: 'superadmin' | 'school_admin';
   schoolId?: mongoose.Types.ObjectId;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +44,10 @@ const UserSchema = new Schema<IUser>(
       ref: 'School',
       default: null,
     },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
   },
   { timestamps: true }
 );

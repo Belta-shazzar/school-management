@@ -2,24 +2,24 @@ import bcrypt from 'bcrypt';
 import UserModel from './User.mongoModel';
 
 export default class UserManager {
-  private config: any;
+  // private config: any;
   private validators: any;
   private tokenManager: any;
-  private mongomodels: any;
+  // private mongomodels: any;
 
   public httpExposed: string[];
 
   constructor({ config, managers, validators, mongomodels }: any) {
-    this.config = config;
+    // this.config = config;
     this.validators = validators;
-    this.mongomodels = mongomodels;
+    // this.mongomodels = mongomodels;
     this.tokenManager = managers.token;
     this.httpExposed = ['post=register', 'post=login'];
   }
 
   /**
    * Register a new user.
-   * POST /api/user/register
+   * POST /api/auth/register
    */
   async register({
     username,
@@ -83,7 +83,7 @@ export default class UserManager {
 
   /**
    * Login an existing user.
-   * POST /api/user/login
+   * POST /api/auth/login
    */
   async login({ email, password }: { email: string; password: string }) {
     const loginData = { email, password };

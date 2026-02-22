@@ -75,7 +75,7 @@ export default class StudentManager {
       email,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
       schoolId: resolvedSchoolId,
-      classroomId: classroomId || undefined,
+      currentClassroomId: classroomId || undefined,
       enrollmentDate: new Date(),
     });
 
@@ -101,14 +101,14 @@ export default class StudentManager {
 
     const student = await StudentModel.findById(id)
       .populate('schoolId')
-      .populate('classroomId');
+      .populate('currentClassroomId');
     if (!student) return { error: 'Student not found' };
 
-    // Scope check
-    if (
-      __token.role === 'school_admin' &&
-      student.schoolId.toString() !== __token.schoolId
-    ) {
+    // Scope check.
+    // After .populate(), schoolId is a Document — use ._id to get the ObjectId string.
+    const studentSchoolId =
+      (student.schoolId as any)._id?.toString() ?? student.schoolId.toString();
+    if (__token.role === 'school_admin' && studentSchoolId !== __token.schoolId) {
       return { error: 'Forbidden: you can only access your school\'s students' };
     }
 
@@ -141,7 +141,7 @@ export default class StudentManager {
     }
 
     if (__query?.classroomId) {
-      filter.classroomId = __query.classroomId;
+      filter.currentClassroomId = __query.classroomId;
     }
 
     const [students, total] = await Promise.all([
@@ -149,7 +149,7 @@ export default class StudentManager {
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
-        .populate('classroomId'),
+        .populate('currentClassroomId'),
       StudentModel.countDocuments(filter),
     ]);
 
@@ -198,7 +198,7 @@ export default class StudentManager {
     if (lastName !== undefined) updateData.lastName = lastName;
     if (email !== undefined) updateData.email = email;
     if (dateOfBirth !== undefined) updateData.dateOfBirth = new Date(dateOfBirth);
-    if (classroomId !== undefined) updateData.classroomId = classroomId;
+    if (classroomId !== undefined) updateData.currentClassroomId = classroomId;
 
     if (this.validators?.student?.updateStudent) {
       const validationResult = await this.validators.student.updateStudent(updateData);
@@ -285,12 +285,12 @@ export default class StudentManager {
       if (!classroom || classroom.schoolId.toString() !== targetSchoolId) {
         return { error: 'Invalid classroom: classroom not found or does not belong to the target school' };
       }
-      updateData.classroomId = newClassroomId;
+      updateData.currentClassroomId = newClassroomId;
     }
 
     const updated = await StudentModel.findByIdAndUpdate(studentId, updateData, {
       new: true,
-    }).populate('schoolId').populate('classroomId');
+    }).populate('schoolId').populate('currentClassroomId');
 
     return { message: 'Student transferred successfully', student: updated };
   }

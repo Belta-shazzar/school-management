@@ -1,4 +1,5 @@
-import ClassroomModel from './Classroom.mongoModel';
+import ClassroomModel from "./Classroom.mongoModel";
+import SchoolManager from "../school/School.manager";
 
 export default class ClassroomManager {
   private validators: any;
@@ -8,11 +9,11 @@ export default class ClassroomManager {
   constructor({ validators }: any) {
     this.validators = validators;
     this.httpExposed = [
-      'post=createClassroom',
-      'get=getClassroom',
-      'get=getClassrooms',
-      'put=updateClassroom',
-      'delete=deleteClassroom',
+      "post=createClassroom",
+      "get=getClassroom",
+      "get=getClassrooms",
+      "put=updateClassroom",
+      "delete=deleteClassroom",
     ];
   }
 
@@ -20,8 +21,11 @@ export default class ClassroomManager {
    * Helper: resolve the schoolId for the current user.
    * Superadmins can pass a schoolId explicitly; school_admins use their assigned school.
    */
-  private _resolveSchoolId(tokenData: any, explicitSchoolId?: string): string | null {
-    if (tokenData.role === 'superadmin') {
+  private _resolveSchoolId(
+    tokenData: any,
+    explicitSchoolId?: string,
+  ): string | null {
+    if (tokenData.role === "superadmin") {
       return explicitSchoolId || null;
     }
     return tokenData.schoolId || null;
@@ -49,15 +53,24 @@ export default class ClassroomManager {
   }) {
     const resolvedSchoolId = this._resolveSchoolId(__token, schoolId);
     if (!resolvedSchoolId) {
-      return { error: 'School ID is required. School admins must be assigned to a school.' };
+      return {
+        error:
+          "School ID is required. School admins must be assigned to a school.",
+      };
     }
 
     const classroomData = { name, capacity, resources };
 
     if (this.validators?.classroom?.createClassroom) {
-      const validationResult = await this.validators.classroom.createClassroom(classroomData);
+      const validationResult =
+        await this.validators.classroom.createClassroom(classroomData);
       if (validationResult) return validationResult;
     }
+
+    const school = await SchoolManager.getSchoolById(resolvedSchoolId);
+    if (!school) return { error: "School not found" };
+
+    // TODO: Add check to prevent creating classrooms with duplicate names within the same school.
 
     const classroom = await ClassroomModel.create({
       ...classroomData,
@@ -82,17 +95,23 @@ export default class ClassroomManager {
     __query: any;
   }) {
     const { id } = __query;
-    if (!id) return { error: 'Classroom ID is required' };
+    if (!id) return { error: "Classroom ID is required" };
+    
+    const classroom = await ClassroomModel.findById(id).populate("schoolId");
+    if (!classroom) return { error: "Classroom not found" };
 
-    const classroom = await ClassroomModel.findById(id).populate('schoolId');
-    if (!classroom) return { error: 'Classroom not found' };
-
-    // Scope check for school_admin
+    // Scope check for school_admin.
+    // After .populate(), schoolId is a Document — use ._id to get the ObjectId string.
+    const classroomSchoolId =
+      (classroom.schoolId as any)._id?.toString() ??
+      classroom.schoolId.toString();
     if (
-      __token.role === 'school_admin' &&
-      classroom.schoolId.toString() !== __token.schoolId
+      __token.role === "school_admin" &&
+      classroomSchoolId !== __token.schoolId
     ) {
-      return { error: 'Forbidden: you can only access your school\'s classrooms' };
+      return {
+        error: "Forbidden: you can only access your school's classrooms",
+      };
     }
 
     return classroom;
@@ -117,14 +136,17 @@ export default class ClassroomManager {
     const skip = (page - 1) * limit;
 
     const filter: any = {};
-    if (__token.role === 'school_admin') {
+    if (__token.role === "school_admin") {
       filter.schoolId = __token.schoolId;
     } else if (__query?.schoolId) {
       filter.schoolId = __query.schoolId;
     }
 
     const [classrooms, total] = await Promise.all([
-      ClassroomModel.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
+      ClassroomModel.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }),
       ClassroomModel.countDocuments(filter),
     ]);
 
@@ -151,17 +173,19 @@ export default class ClassroomManager {
     capacity?: number;
     resources?: string[];
   }) {
-    if (!id) return { error: 'Classroom ID is required' };
+    if (!id) return { error: "Classroom ID is required" };
 
     const classroom = await ClassroomModel.findById(id);
-    if (!classroom) return { error: 'Classroom not found' };
+    if (!classroom) return { error: "Classroom not found" };
 
     // Scope check
     if (
-      __token.role === 'school_admin' &&
+      __token.role === "school_admin" &&
       classroom.schoolId.toString() !== __token.schoolId
     ) {
-      return { error: 'Forbidden: you can only update your school\'s classrooms' };
+      return {
+        error: "Forbidden: you can only update your school's classrooms",
+      };
     }
 
     const updateData: any = {};
@@ -170,11 +194,14 @@ export default class ClassroomManager {
     if (resources !== undefined) updateData.resources = resources;
 
     if (this.validators?.classroom?.updateClassroom) {
-      const validationResult = await this.validators.classroom.updateClassroom(updateData);
+      const validationResult =
+        await this.validators.classroom.updateClassroom(updateData);
       if (validationResult) return validationResult;
     }
 
-    const updated = await ClassroomModel.findByIdAndUpdate(id, updateData, { new: true });
+    const updated = await ClassroomModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
     return updated;
   }
 
@@ -192,20 +219,22 @@ export default class ClassroomManager {
     __schoolAdmin: any;
     id: string;
   }) {
-    if (!id) return { error: 'Classroom ID is required' };
+    if (!id) return { error: "Classroom ID is required" };
 
     const classroom = await ClassroomModel.findById(id);
-    if (!classroom) return { error: 'Classroom not found' };
+    if (!classroom) return { error: "Classroom not found" };
 
     // Scope check
     if (
-      __token.role === 'school_admin' &&
+      __token.role === "school_admin" &&
       classroom.schoolId.toString() !== __token.schoolId
     ) {
-      return { error: 'Forbidden: you can only delete your school\'s classrooms' };
+      return {
+        error: "Forbidden: you can only delete your school's classrooms",
+      };
     }
 
     await ClassroomModel.findByIdAndDelete(id);
-    return { message: 'Classroom deleted successfully' };
+    return { message: "Classroom deleted successfully" };
   }
 }

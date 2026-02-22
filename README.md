@@ -56,37 +56,6 @@ npm start
 
 ## Architecture
 
-This project follows the **axion boilerplate** architecture:
-
-```
-src/
-├── config/              # Environment configuration
-├── connect/             # MongoDB connection
-├── libs/                # Utility functions
-├── loaders/             # Auto-discovery loaders
-│   ├── ManagersLoader   # Central orchestrator
-│   ├── ValidatorsLoader # Schema validation
-│   ├── MiddlewaresLoader# Middleware factories
-│   └── MongoLoader      # Mongoose model loader
-├── managers/
-│   ├── api/             # HTTP API handler (routes to managers)
-│   ├── entities/        # Business logic managers
-│   │   ├── user/        # User registration & login
-│   │   ├── school/      # School CRUD
-│   │   ├── classroom/   # Classroom CRUD
-│   │   └── student/     # Student CRUD + transfer
-│   ├── http/            # Express server
-│   ├── response_dispatcher/  # Standardized responses
-│   ├── token/           # JWT token management
-│   └── virtual_stack/   # Middleware execution engine
-├── mws/                 # Middleware definitions
-│   ├── __token.mw.ts    # JWT verification
-│   ├── __superadmin.mw.ts   # Superadmin role guard
-│   ├── __schoolAdmin.mw.ts  # School admin role guard
-│   └── ...
-└── static_arch/         # System configuration
-```
-
 ### How Routing Works
 
 All API requests go through a single Express route: `app.all('/api/:moduleName/:fnName')`.
@@ -97,8 +66,8 @@ The **ApiHandler** scans all managers for `httpExposed` arrays, builds a method 
 
 ## Authentication Flow
 
-1. **Register** → `POST /api/user/register` → Returns a JWT `longToken`
-2. **Login** → `POST /api/user/login` → Returns a JWT `longToken`
+1. **Register** → `POST /api/auth/register` → Returns a JWT `longToken`
+2. **Login** → `POST /api/auth/login` → Returns a JWT `longToken`
 3. **Use Token** → Include `token: <longToken>` in request headers for authenticated endpoints
 
 ### Roles
@@ -116,7 +85,7 @@ The **ApiHandler** scans all managers for `httpExposed` arrays, builds a method 
 
 #### Register
 ```
-POST /api/user/register
+POST /api/auth/register
 Content-Type: application/json
 
 {
@@ -140,7 +109,7 @@ Content-Type: application/json
 
 #### Login
 ```
-POST /api/user/login
+POST /api/auth/login
 Content-Type: application/json
 
 {
@@ -223,31 +192,7 @@ All responses follow a consistent format:
 
 ## Database Schema
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│    User      │     │   School     │     │  Classroom   │
-├──────────────┤     ├──────────────┤     ├──────────────┤
-│ username     │     │ name         │◄────│ schoolId     │
-│ email        │     │ address      │     │ name         │
-│ password     │     │ phone?       │     │ capacity     │
-│ role         │     │ email?       │     │ resources[]  │
-│ schoolId? ───┼────►│ website?     │     │ timestamps   │
-│ timestamps   │     │ timestamps   │     └──────┬───────┘
-└──────────────┘     └──────────────┘            │
-                                                  │
-                     ┌──────────────┐              │
-                     │   Student    │              │
-                     ├──────────────┤              │
-                     │ firstName    │              │
-                     │ lastName     │              │
-                     │ email?       │              │
-                     │ dateOfBirth? │              │
-                     │ schoolId ────┼──► School    │
-                     │ classroomId? ┼──────────────┘
-                     │ enrollmentDt │
-                     │ timestamps   │
-                     └──────────────┘
-```
+[https://dbdiagram.io/d/student-management-699b81b1bd82f5fce2723af1](https://dbdiagram.io/d/student-management-699b81b1bd82f5fce2723af1)
 
 ## Security Features
 
