@@ -22,8 +22,14 @@ A RESTful API for managing schools, classrooms, and students with role-based acc
 
 ```bash
 git clone <repository-url>
-cd soar
+cd school-management
 npm install
+touch .env
+cp .env.example .env
+npm run dev
+
+# Check service health
+curl http://localhost:8000/health
 ```
 
 ### Environment Variables
@@ -50,6 +56,12 @@ npm run build
 
 # Run production build
 npm start
+
+# Run tests
+npm run test
+
+# Coverage
+npm run test:coverage
 ```
 
 ---
